@@ -1,0 +1,6 @@
+{
+  "appId": "com.rudanic.bookmyplace",
+  "appName": "book-my-place",
+  "bundledWebRuntime": false,
+  "webDir": "www"
+}
