@@ -1,44 +1,11 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
 import { take, map, tap, delay, switchMap } from 'rxjs/operators';
 
 import { Place } from './place.model';
 import { AuthService } from '../auth/auth.service';
-import { Urls } from 'src/app/shared/url.constant';
-
-// [
-//   new Place(
-//     'p1',
-//     'Manhattan Mansion',
-//     'In the heart of New York City.',
-//     'https://lonelyplanetimages.imgix.net/mastheads/GettyImages-538096543_medium.jpg?sharp=10&vib=20&w=1200',
-//     149.99,
-//     new Date('2019-01-01'),
-//     new Date('2019-12-31'),
-//     'abc'
-//   ),
-//   new Place(
-//     'p2',
-//     "L'Amour Toujours",
-//     'A romantic place in Paris!',
-//     'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Paris_Night.jpg/1024px-Paris_Night.jpg',
-//     189.99,
-//     new Date('2019-01-01'),
-//     new Date('2019-12-31'),
-//     'abc'
-//   ),
-//   new Place(
-//     'p3',
-//     'The Foggy Palace',
-//     'Not your average city trip!',
-//     'https://upload.wikimedia.org/wikipedia/commons/0/01/San_Francisco_with_two_bridges_and_the_fog.jpg',
-//     99.99,
-//     new Date('2019-01-01'),
-//     new Date('2019-12-31'),
-//     'abc'
-//   )
-// ]
+import { Urls } from '../shared/url.constant';
 
 interface PlaceData {
   availableFrom: string;
@@ -96,12 +63,24 @@ export class PlacesService {
   }
 
   getPlace(id: string) {
-    return this.places.pipe(
-      take(1),
-      map(places => {
-        return { ...places.find(p => p.id === id) };
-      })
-    );
+    return this.http
+      .get<PlaceData>(
+        Urls.offeredPlacesURL + `/${id}.json`
+      )
+      .pipe(
+        map(placeData => {
+          return new Place(
+            id,
+            placeData.title,
+            placeData.description,
+            placeData.imageUrl,
+            placeData.price,
+            new Date(placeData.availableFrom),
+            new Date(placeData.availableTo),
+            placeData.userId
+          );
+        })
+      );
   }
 
   addPlace(
@@ -141,19 +120,19 @@ export class PlacesService {
           this._places.next(places.concat(newPlace));
         })
       );
-    // return this.places.pipe(
-    //   take(1),
-    //   delay(1000),
-    //   tap(places => {
-    //     this._places.next(places.concat(newPlace));
-    //   })
-    // );
   }
 
   updatePlace(placeId: string, title: string, description: string) {
     let updatedPlaces: Place[];
     return this.places.pipe(
       take(1),
+      switchMap(places => {
+        if (!places || places.length <= 0) {
+          return this.fetchPlaces();
+        } else {
+          return of(places);
+        }
+      }),
       switchMap(places => {
         const updatedPlaceIndex = places.findIndex(pl => pl.id === placeId);
         updatedPlaces = [...places];
