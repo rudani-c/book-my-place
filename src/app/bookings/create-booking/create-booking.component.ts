@@ -12,7 +12,7 @@ import { Place } from '../../places/place.model';
 export class CreateBookingComponent implements OnInit {
   @Input() selectedPlace: Place;
   @Input() selectedMode: 'select' | 'random';
-  @ViewChild('f', { static: true }) form: NgForm;
+  @ViewChild('f', { static: false }) form: NgForm;
   startDate: string;
   endDate: string;
 
